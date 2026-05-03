@@ -1,83 +1,68 @@
 import streamlit as st
-import subprocess
 import os
-import time
 
-# Konfigurasi halaman
 st.set_page_config(page_title="Panel Server Minecraft", page_icon="⛏️")
-
 st.title("🎮 Panel Kontrol Server Minecraft Bedrock")
-st.markdown("Menggunakan **Endstone** + **Screen** di belakang layar.")
+st.warning("⚠️ **Streamlit Cloud tidak dapat menjalankan server game secara langsung.** Gunakan Google Colab untuk server sungguhan. Panel ini hanya sebagai contoh antarmuka.")
 
-# Inisialisasi session state
+# Gunakan direktori yang sudah ada (tidak perlu membuat /content)
+DATA_DIR = os.path.join(os.getcwd(), "server_data")
+if not os.path.exists(DATA_DIR):
+    try:
+        os.makedirs(DATA_DIR, exist_ok=True)
+        st.success(f"Direktori {DATA_DIR} siap.")
+    except Exception as e:
+        st.error(f"Gagal membuat direktori: {e}")
+
+# Inisialisasi session state untuk log
 if 'log' not in st.session_state:
     st.session_state.log = []
-    if os.path.exists("server_log.txt"):
+    log_file = os.path.join(DATA_DIR, "server_log.txt")
+    if os.path.exists(log_file):
         try:
-            with open("server_log.txt", "r") as f:
+            with open(log_file, "r") as f:
                 st.session_state.log = f.read().splitlines()[-500:]
         except:
             pass
 
 # Fungsi baca log
 def baca_log():
-    if os.path.exists("server_log.txt"):
+    log_file = os.path.join(DATA_DIR, "server_log.txt")
+    if os.path.exists(log_file):
         try:
-            with open("server_log.txt", "r") as f:
+            with open(log_file, "r") as f:
                 st.session_state.log = f.read().splitlines()[-500:]
         except:
             pass
 
-# Sidebar kontrol
+# Sidebar kontrol (hanya simulasi)
 with st.sidebar:
-    st.header("⚙️ Kontrol")
-    
-    if st.button("▶️ Nyalakan Server", use_container_width=True):
-        os.makedirs("/content/endstone_server", exist_ok=True)
-        os.chdir("/content/endstone_server")
-        # Jalankan server di dalam screen session
-        subprocess.Popen(["screen", "-dmS", "mcserver", "endstone"],
-                         cwd="/content/endstone_server")
-        st.success("✅ Server sedang berjalan. Tunggu 5 detik.")
-        time.sleep(2)
-        st.rerun()
-    
-    if st.button("⏹️ Matikan Server", use_container_width=True):
-        subprocess.run(["screen", "-S", "mcserver", "-X", "quit"])
-        st.success("🛑 Server dimatikan.")
-        st.rerun()
-    
-    st.divider()
+    st.header("⚙️ Kontrol (Simulasi)")
+    if st.button("▶️ Nyalakan Server (Demo)", use_container_width=True):
+        st.info("⚠️ Di Streamlit Cloud, server tidak benar-benar berjalan. Gunakan Google Colab untuk fungsi sebenarnya.")
+    if st.button("⏹️ Matikan Server (Demo)", use_container_width=True):
+        st.info("⚠️ Hanya simulasi.")
     if st.button("🔄 Refresh Log", use_container_width=True):
         baca_log()
         st.rerun()
 
 # Area log
-st.subheader("📜 Log Server")
+st.subheader("📜 Log Server (Demo)")
 log_placeholder = st.empty()
 baca_log()
 if st.session_state.log:
     log_placeholder.code("\n".join(st.session_state.log[-200:]), language="bash")
 else:
-    log_placeholder.info("Log akan muncul setelah server dinyalakan.")
-
-# Perintah sederhana (hanya stop, list, op, dll - memerlukan file input)
-st.subheader("✏️ Kirim Perintah (Eksperimental)")
-st.info("Catatan: Fitur ini membutuhkan server Endstone yang dikonfigurasi membaca file input. Jika tidak berfungsi, gunakan perintah stop dari tombol Matikan Server.")
-cmd = st.text_input("Perintah (stop, list, op <nama>)")
-if st.button("Kirim Perintah"):
-    if cmd:
-        try:
-            with open("/content/endstone_server/input.txt", "w") as f:
-                f.write(cmd + "\n")
-            st.success(f"Perintah '{cmd}' dikirim.")
-        except Exception as e:
-            st.error(f"Gagal kirim: {e}")
+    log_placeholder.info("Log akan muncul jika file server_log.txt ada. (Simulasi)")
 
 # Panduan
 st.markdown("---")
-st.subheader("📌 Panduan Singkat")
-st.markdown("1. Klik **Nyalakan Server** (pastikan sudah install endstone: `!pip install endstone`).")
-st.markdown("2. Gunakan Ngrok untuk akses publik: `!ngrok tcp 19132`.")
-st.markdown("3. Di Minecraft Bedrock, tambahkan server dengan alamat dari Ngrok (contoh: `0.tcp.ngrok.io:12345`).")
-st.markdown("4. Untuk memberi operator, kirim perintah `op <nama_pemain>` melalui kotak di atas.")
+st.subheader("📌 Cara Benar Menjalankan Server Minecraft + Streamlit Panel")
+st.markdown("""
+### Gunakan Google Colab (Gratis, 100% Browser)
+1. Buka [Google Colab](https://colab.research.google.com)
+2. Buat notebook baru, ubah runtime ke **T4 GPU**
+3. Jalankan perintah berikut:
+   ```python
+   !pip install endstone streamlit pyngrok
+   !apt-get install -y screen
